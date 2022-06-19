@@ -2,9 +2,7 @@ package cn.liyohe.juc.chapter8;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author Liyohe
@@ -18,6 +16,9 @@ public class ThreadPoolStatus {
 
     public static void main(String[] args) {
         status();
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService1 = Executors.newCachedThreadPool();
+
     }
 
     public static void status() {
