@@ -1,4 +1,4 @@
-package cn.liyohe.juc.chapter8;
+package cn.liyohe.juc.chapter8.threadpool;
 
 import lombok.extern.slf4j.Slf4j;
 

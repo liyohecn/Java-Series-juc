@@ -1,4 +1,4 @@
-package cn.liyohe.juc.chapter8;
+package cn.liyohe.juc.chapter8.threadpool;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
