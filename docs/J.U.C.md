@@ -30,8 +30,8 @@
 ```java
 // 如果获取锁失败
 if(!tryAcquire(arg)){
-// 入队, 可以选择阻塞当前线程 park unpark
-}
+        // 入队, 可以选择阻塞当前线程 park unpark
+        }
 ```
 
 释放锁的姿势
@@ -39,13 +39,94 @@ if(!tryAcquire(arg)){
 ```java
 // 如果释放锁成功
 if(tryRelease(arg)){
-// 让阻塞线程恢复运行
+        // 让阻塞线程恢复运行
         }
 ```
 
 ### 1.2 实现不可重入锁
 
 **自定义同步器**
+
+```java
+public class CustomSync extends AbstractQueuedSynchronizer {
+
+    @Override
+    protected boolean tryAcquire(int acquires) {
+        if (acquires == 1) {
+            if (compareAndSetState(0, 1)) {
+                setExclusiveOwnerThread(Thread.currentThread());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean tryRelease(int acquires) {
+        if (acquires == 1) {
+            setExclusiveOwnerThread(null);
+            setState(0);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean isHeldExclusively() {
+        return getState() == 1;
+    }
+
+    protected Condition newCondition() {
+        return new ConditionObject();
+    }
+}
+
+```
+
+```java
+public class CustomLock implements Lock {
+
+    private CustomSync sync = new CustomSync();
+
+    // 尝试，不成功，进入等待队列
+    @Override
+    public void lock() {
+        sync.acquire(1);
+    }
+
+    // 尝试，不成功，进入等待队列，可打断
+    @Override
+    public void lockInterruptibly() throws InterruptedException {
+        sync.acquireInterruptibly(1);
+    }
+
+    // 尝试一次，不成功返回，不进入队列
+    @Override
+    public boolean tryLock() {
+        return sync.tryAcquire(1);
+    }
+
+    // 尝试，不成功，进入等待队列，有时限
+    @Override
+    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+        return sync.tryAcquireNanos(1, unit.toNanos(time));
+    }
+
+    // 释放锁
+    @Override
+    public void unlock() {
+        sync.release(1);
+    }
+
+
+    // 生成条件变量
+    @Override
+    public Condition newCondition() {
+        return sync.newCondition();
+    }
+    
+}
+```
 
 ### 1.3 心得
 
@@ -76,19 +157,19 @@ AQS 的基本思想其实很简单
 
 ```java
 while(state 状态不允许获取){
-        if(队列中还没有此线程){
-        入队并阻塞
-        }
-        }
-        当前线程出队
+    if(队列中还没有此线程){
+    入队并阻塞
+    }
+}
+    当前线程出队
 ```
 
 释放锁的逻辑
 
 ```java
 if(state 状态允许了){
-        恢复阻塞的线程(s)
-        }
+    恢复阻塞的线程(s)
+}
 ```
 
 要点
@@ -138,7 +219,7 @@ if(state 状态允许了){
 
 ### 3.1ReentrantReadWriteLock
 
-​ 当读操作远远高于写操作时，这时候使用 `读写锁` 让 `读-读` 可以并发，提高性能。 类似于数据库中的 `select ...from ... lock in share mode`
+当读操作远远高于写操作时，这时候使用 `读写锁` 让 `读-读` 可以并发，提高性能。 类似于数据库中的 `select ...from ... lock in share mode`
 
 提供一个 `数据容器类` 内部分别使用读锁保护数据的 `read()` 方法，写锁保护数据的 `write()` 方法
 
